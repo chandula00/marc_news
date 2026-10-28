@@ -4,6 +4,29 @@
 
 If your pull request is merged here, the website workflow will clone this repository into the website build, and your news article can appear on the live site.
 
+## :file_folder: Where things go
+
+```text
+marc_news/
+├── articles/                        ← one Markdown file per news article
+│   ├── 2026-03-10-example-news.md
+│   └── cover_photos/                ← cover images and article photos
+└── scripts/validate-news.mjs
+```
+
+Markdown files outside `articles/` are not picked up by the website, and the validator reports them. Image paths in the front matter stay relative to the Markdown file, e.g. `./cover_photos/example_news.jpg`.
+
+## :key: Linking keys: keep these the same after publishing
+
+News articles are not linked to profiles or projects, but two things still act as keys:
+
+- **The file name** is the article's address (`2026-03-10-example-news.md` → `/news/2026-03-10-example-news/`). Don't rename a file after the article has been shared; fix the `title` instead.
+- **Image paths** (`cover` and images in the text) must match the photo files exactly, including upper and lower case.
+
+Everything else (title, date, summary, text, vacancy fields) is safe to change at any time.
+
+Full guide: [pdnmarc.github.io/docs/news](https://pdnmarc.github.io/docs/news/)
+
 ## :sparkles: Two ways to add news
 
 There are two different ways to add news to the MARC website:
@@ -18,7 +41,7 @@ Use the Google Sheet when you want a shorter social/news update that links to an
 
 You will usually add:
 - one Markdown file for your news article
-- optionally one cover image inside `cover_photos/`
+- optionally one cover image inside `articles/cover_photos/`
 
 A typical news file looks like this:
 
@@ -51,6 +74,22 @@ Required fields:
 
 Optional field:
 - `cover`
+
+## :briefcase: Vacancies and calls
+
+A vacancy, internship, volunteer call or any other "apply by" announcement is a normal news article with up to three extra fields:
+
+```yaml
+vacancy: true                  # also list it on the website's Vacancies page
+deadline: 2026-11-30           # optional: last day to apply (YYYY-MM-DD)
+apply: https://forms.gle/xxxx  # optional: application link (https://… or mailto:…)
+```
+
+- The article appears in News as usual, tagged "Vacancy".
+- It is listed on the Vacancies page (`/vacancies`) until the end of its `deadline` day (Sri Lanka time), then drops off by itself. Its article page then shows "Applications closed".
+- Without a `deadline`, it stays on the Vacancies page until you remove `vacancy: true`.
+- `deadline` and `apply` are only allowed together with `vacancy: true`.
+- Put the details (role, eligibility, how to apply) in the article body.
 
 ## :brain: Before you start
 
@@ -148,7 +187,7 @@ Here is an inline image:
 ![Example photo](./cover_photos/example_news.jpg)
 ```
 
-If you include an image in the content section, use a relative path to a file inside the repository.
+If you include an image in the content section, put it in `articles/cover_photos/` and use a path relative to your article, such as `./cover_photos/example_news_2.jpg`.
 
 Keep it reasonably simple and readable. Plain paragraphs are completely fine.
 
@@ -156,7 +195,7 @@ Keep it reasonably simple and readable. Plain paragraphs are completely fine.
 
 If you want a cover image:
 
-1. Put the image file inside the `cover_photos/` folder.
+1. Put the image file inside the `articles/cover_photos/` folder.
 2. Reference it in the `cover` field.
 
 Example:
@@ -251,7 +290,7 @@ This is the easiest option if you do not want to use Git locally.
 ### 2. Create your news file in the browser
 
 1. Open your fork on GitHub.
-2. In the repository root, click `Add file`.
+2. Open the `articles/` folder, then click `Add file`.
 3. Choose `Create new file`.
 4. Name the file something clear, for example:
 
@@ -278,7 +317,7 @@ Write the full article here.
 
 If you want a cover image:
 
-1. Open the `cover_photos/` folder in your fork.
+1. Open the `articles/cover_photos/` folder in your fork.
 2. Click `Add file`.
 3. Choose `Upload files`.
 4. Upload your image.
@@ -297,7 +336,7 @@ If you already have an article and just want to update it:
 1. Open the existing `.md` file in your fork.
 2. Click the pencil icon to edit it.
 3. Update the front matter or article content.
-4. If needed, upload a new image to `cover_photos/`.
+4. If needed, upload a new image to `articles/cover_photos/`.
 5. Scroll down and commit the change to a new branch.
 6. Open a pull request.
 
@@ -345,7 +384,7 @@ Use any clear branch name such as `add-example-news`.
 
 ### 4. Add your news file
 
-Create a new Markdown file in the repository root.
+Create a new Markdown file inside the `articles/` folder.
 
 Example:
 
@@ -378,7 +417,7 @@ Plain paragraphs are enough.
 
 If you want a cover image:
 
-1. Put the image file inside the `cover_photos/` folder.
+1. Put the image file inside the `articles/cover_photos/` folder.
 2. Reference it in the `cover` field.
 
 Example:
@@ -421,9 +460,9 @@ Social feed items follow a different path:
 
 ## :white_check_mark: Checklist before opening the pull request for Markdown news
 
-- Your Markdown file is in the repository root.
+- Your Markdown file is in the `articles/` folder.
 - Your front matter includes `title`, `date`, and `short`.
 - Your `date` uses the exact `YYYY-MM-DD` format.
 - Your `cover` path is correct if you added an image.
-- Your cover image file is inside `cover_photos/` if you used one.
+- Your cover image file is inside `articles/cover_photos/` if you used one.
 - Your article content is below the closing `---` line.
