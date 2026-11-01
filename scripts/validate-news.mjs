@@ -4,6 +4,8 @@ import matter from "gray-matter";
 import { z } from "zod";
 
 const repoRoot = process.cwd();
+// Markdown files live in articles/, together with their images (articles/cover_photos/).
+const contentDir = path.join(repoRoot, "articles");
 const nonEmptyString = z.string().trim().min(1);
 const frontmatterSchema = z
   .object({
@@ -11,26 +13,42 @@ const frontmatterSchema = z
     date: z.coerce.date(),
     cover: nonEmptyString.optional(),
     short: nonEmptyString,
+    vacancy: z.boolean().optional(),
+    deadline: z.coerce.date().optional(),
+    apply: z
+      .string()
+      .trim()
+      .regex(/^(https?:\/\/|mailto:)/, "must start with https:// or mailto:")
+      .optional(),
   })
   .strict();
 
-const markdownFiles = fs
+const isMarkdown = (entry) =>
+  entry.isFile() &&
+  entry.name.toLowerCase().endsWith(".md") &&
+  entry.name.toLowerCase() !== "readme.md";
+
+// Markdown left at the repository root is not picked up by the website.
+const misplacedFiles = fs
   .readdirSync(repoRoot, { withFileTypes: true })
-  .filter(
-    (entry) =>
-      entry.isFile() &&
-      entry.name.toLowerCase().endsWith(".md") &&
-      entry.name.toLowerCase() !== "readme.md",
-  )
+  .filter(isMarkdown)
+  .map((entry) => entry.name);
+
+const markdownFiles = fs
+  .readdirSync(contentDir, { withFileTypes: true })
+  .filter(isMarkdown)
   .map((entry) => entry.name)
   .sort((a, b) => a.localeCompare(b));
 
 const failures = [];
+for (const fileName of misplacedFiles) {
+  failures.push(`${fileName}: move this file into the articles/ folder`);
+}
 const seenTitles = new Map();
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 for (const fileName of markdownFiles) {
-  const filePath = path.join(repoRoot, fileName);
+  const filePath = path.join(contentDir, fileName);
   const raw = fs.readFileSync(filePath, "utf8");
 
   let parsed;
@@ -73,10 +91,26 @@ for (const fileName of markdownFiles) {
     failures.push(`${fileName}: date must use the exact YYYY-MM-DD format`);
   }
 
+  if (data.deadline) {
+    const rawDeadline = parsed.matter
+      .split(/\r?\n/)
+      .find((line) => line.trimStart().startsWith("deadline:"))
+      ?.replace(/^\s*deadline:\s*/, "")
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
+    if (!rawDeadline || !isoDatePattern.test(rawDeadline)) {
+      failures.push(`${fileName}: deadline must use the exact YYYY-MM-DD format`);
+    }
+  }
+
+  if ((data.deadline || data.apply) && data.vacancy !== true) {
+    failures.push(`${fileName}: deadline and apply are only used with vacancy: true`);
+  }
+
   if (data.cover) {
     if (!data.cover.startsWith("./cover_photos/")) {
       failures.push(
-        `${fileName}: cover must use a repo-relative path starting with "./cover_photos/"`,
+        `${fileName}: cover must use a relative path starting with "./cover_photos/"`,
       );
     }
 
